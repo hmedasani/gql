@@ -1,50 +1,51 @@
 import { gql } from 'apollo-server';
 
-// schema as typedefs
 export const typeDefs = gql`
   type Query {
-    posts: [Post!]!
+    members: [Member!]!
+    member(id: ID!): Member
+    categories: [Category!]!
+    category(id: ID!): Category
+    products: [Product!]!
+    product(id: ID!): Product
+    reviews: [Review!]!
+    review(id: ID!): Review
   }
 
-  type Mutation {
-    postCreate(post: PostInput!): PostPayload!
-    postUpdate(postId: ID!, post: PostInput!): PostPayload!
-  }
-
-  type Post {
-    id: ID!
-    title: String!
-    content: String!
-    createdAt: String!
-    published: Boolean!
-    user: User!
-  }
-
-  type User {
+  type Member {
     id: ID!
     name: String!
-    email: String!
-    profile: Profile!
-    posts: [Post!]!
+    education: Int!
+    height: Float!
+    dob: String!
+    profession: String!
+    isPhd: Boolean!
+    categoryId: String!
+    category: Category
   }
 
-  type Profile {
+  type Category {
     id: ID!
-    bio: String!
-    user: User!
+    name: String!
+    members: [Member!]
   }
 
-  type UserError {
-    message: String!
+  type Product {
+    id: ID!
+    name: String!
+    description: String!
+    quantity: Int!
+    price: Float!
+    image: String!
+    onSale: Boolean!
   }
 
-  type PostPayload {
-    userErrors: [UserError!]!
-    post: Post
-  }
-
-  input PostInput {
-    title: String
-    content: String
+  type Review {
+    id: ID!
+    date: String!
+    title: String!
+    comment: String!
+    rating: Float!
+    productId: String!
   }
 `;
