@@ -38,6 +38,7 @@ export const typeDefs = gql`
     price: Float!
     image: String!
     onSale: Boolean!
+    review: Review
   }
 
   type Review {
@@ -47,5 +48,6 @@ export const typeDefs = gql`
     comment: String!
     rating: Float!
     productId: String!
+    product: Product
   }
 `;

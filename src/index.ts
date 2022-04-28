@@ -35,6 +35,16 @@ const server = new ApolloServer({
       category: ({ categoryId }, args, context) => {
         return categoriesArr.find((each) => each.id === categoryId);
       }
+    },
+    Product: {
+      review: ({ id }, args, context) => {
+        return reviewsArr.find((each) => each.productId === id);
+      }
+    },
+    Review: {
+      product: ({ productId }, args, context) => {
+        return productsArr.find((each) => each.id === productId);
+      }
     }
   },
   context: {
