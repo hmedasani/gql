@@ -1,3 +1,12 @@
+import { ContextProps } from 'src';
+
 export const Query = {
-  hello: () => 'world!'
+  posts: (_: any, __: any, { prisma }: ContextProps) =>
+    prisma.post.findMany({
+      orderBy: [
+        {
+          createdAt: 'desc'
+        }
+      ]
+    })
 };
