@@ -46,7 +46,8 @@ export const typeDefs = gql`
 
   type UserPayload {
     userErrors: [UserError!]!
-    user: User
+    token: String
+    # user: User
   }
 
   type UserError {
@@ -64,6 +65,6 @@ export const typeDefs = gql`
     email: String!
     name: String!
     password: String!
-    bio: String
+    bio: String!
   }
 `;

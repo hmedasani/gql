@@ -1,4 +1,7 @@
 import validator from 'validator';
+import bcrypt, { genSalt } from 'bcryptjs';
+import JWT from 'jsonwebtoken';
+import { JWT_SIGNATURE } from '../../keys';
 import { Prisma, User } from '@prisma/client';
 import { ContextProps } from 'src';
 
@@ -13,7 +16,8 @@ interface UserArgProps {
 
 interface UserProps {
   userErrors: { message: string }[];
-  user: User | Prisma.Prisma__UserClient<User> | null;
+  token: string | null;
+  // user: User | Prisma.Prisma__UserClient<User> | null;
 }
 
 export const userMutation = {
@@ -22,17 +26,18 @@ export const userMutation = {
     { user }: UserArgProps,
     { prisma }: ContextProps
   ): Promise<UserProps> => {
-    const { email, name, password } = user;
+    const { email, name, password, bio } = user;
 
-    if (!email && !name && !password) {
+    if (!email && !name && !password && !bio) {
       return {
         userErrors: [
           {
             message:
-              'Please fill the fields of email, name and password to signup'
+              'Please fill the fields of email, name, password & bio to signup'
           }
         ],
-        user: null
+        token: null
+        // user: null
       };
     }
 
@@ -43,7 +48,20 @@ export const userMutation = {
             message: 'Please provide valid email'
           }
         ],
-        user: null
+        token: null
+        // user: null
+      };
+    }
+
+    if (!validator.isLength(password, { min: 8 })) {
+      return {
+        userErrors: [
+          {
+            message: 'Please provide minimum 8 characters for Password!'
+          }
+        ],
+        token: null
+        // user: null
       };
     }
 
@@ -60,21 +78,44 @@ export const userMutation = {
             message: 'This User is already registered!'
           }
         ],
-        user: null
+        token: null
+        // user: null
       };
     }
+
+    const salt = 10;
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const signedupUser = await prisma.user.create({
       data: {
         email,
         name,
-        password
+        password: hashedPassword
       }
     });
 
+    await prisma.profile.create({
+      data: {
+        bio,
+        userId: signedupUser.id
+      }
+    });
+
+    //JWT:
+    const token = await JWT.sign(
+      {
+        userId: signedupUser.id
+      },
+      JWT_SIGNATURE,
+      {
+        expiresIn: 43200
+      }
+    );
+
     return {
       userErrors: [],
-      user: signedupUser
+      token
+      // user: signedupUser
     };
   }
 };
