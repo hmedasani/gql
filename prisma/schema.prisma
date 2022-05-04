@@ -16,27 +16,30 @@ model Post {
   content   String
   published Boolean   @default(false)
   createdAt DateTime  @default(now())
-  updatedAT DateTime  @updatedAt
-  authorId  Int       
+  updatedAt DateTime  @updatedAt
+
+  authorId  Int
   author    User      @relation(fields: [authorId], references: [id])
 }
 
 model User {
   id        Int       @id @default(autoincrement())
   email     String    @unique
-  name      String?
+  name      String
   password  String
   createdAt DateTime  @default(now())
-  updatedAT DateTime  @updatedAt
+  updatedAt DateTime  @updatedAt
+
   posts     Post[]
   profile   Profile?
 }
 
 model Profile {
   id        Int       @id @default(autoincrement())
-  bio       String    @unique
+  bio       String
   createdAt DateTime  @default(now())
-  updatedAT DateTime  @updatedAt
-  userId    Int  
-  user      User      @relation(fields: [userId], references: [id])     
+  updatedAt DateTime  @updatedAt
+
+  userId    Int       @unique
+  user      User      @relation(fields: [userId], references: [id])
 }

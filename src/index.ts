@@ -1,10 +1,9 @@
 import { ApolloServer } from 'apollo-server';
 import { typeDefs } from './gql/schema';
 import { Query, Mutation } from './gql/resolvers';
-
 import { Prisma, PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
 
+const prisma = new PrismaClient();
 export interface ContextProps {
   prisma: PrismaClient<
     Prisma.PrismaClientOptions,
