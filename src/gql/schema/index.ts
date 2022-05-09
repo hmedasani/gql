@@ -6,10 +6,13 @@ export const typeDefs = gql`
   }
 
   type Mutation {
+    userSignup(user: UserInput!): UserPayloadSign!
+    userSignin(user: UserInputSignin!): UserPayloadSign!
     postCreate(post: PostInput!): PostPayload!
-    postUpdate(postId: String!, post: PostInput!): PostPayload!
-    postDelete(postId: String!): PostPayload!
-    userSignUp(user: UserInput!): UserPayload!
+    postUpdate(postId: ID!, post: PostInput!): PostPayload!
+    postDelete(postId: ID!): PostPayload!
+    postPublish(postId: ID!): PostPayload!
+    postUnPublish(postId: ID!): PostPayload!
   }
 
   type Post {
@@ -37,34 +40,33 @@ export const typeDefs = gql`
     user: User!
   }
 
-  # PAYLOADS:
-  # =====================
-  type PostPayload {
-    userErrors: [UserError!]!
-    post: Post
+  input UserInput {
+    sign: UserInputSignin!
+    name: String!
+    bio: String
   }
 
-  type UserPayload {
-    userErrors: [UserError!]!
-    token: String
-    # user: User
+  input UserInputSignin {
+    email: String!
+    password: String!
   }
 
   type UserError {
     message: String!
   }
 
-  # INPUTS:
-  # =====================
+  type UserPayloadSign {
+    userErrors: [UserError!]!
+    token: String
+  }
+
   input PostInput {
     title: String
     content: String
   }
 
-  input UserInput {
-    email: String!
-    name: String!
-    password: String!
-    bio: String!
+  type PostPayload {
+    userErrors: [UserError!]!
+    post: Post
   }
 `;
