@@ -15,6 +15,7 @@ export const typeDefs = gql`
     postCreate(post: InputPost!): PostPayload!
     postUpdate(postId: String!, post: InputPost!): PostPayload!
     postDelete(postId: String!): PostPayload!
+    postPublish(postId: String!, publish: Boolean!): PostPayload!
   }
 
   type Post {

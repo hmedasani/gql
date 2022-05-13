@@ -1,5 +1,6 @@
 import { postCreate } from './sub_mutations/postCreate';
 import { postUpdate } from './sub_mutations/postUpdate';
+import { postPublish } from './sub_mutations/postPublish';
 import { postDelete } from './sub_mutations/postDelete';
 import { userSignin } from './sub_mutations/userSignin';
 import { userSignup } from './sub_mutations/userSignup';
@@ -9,5 +10,6 @@ export const Mutation = {
   userSignin,
   postCreate,
   postUpdate,
-  postDelete
+  postDelete,
+  postPublish
 };
