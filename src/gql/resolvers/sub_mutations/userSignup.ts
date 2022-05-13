@@ -1,20 +1,19 @@
 import validator from 'validator';
-import JWT from 'jsonwebtoken';
 import bcryptjs from 'bcryptjs';
+import JWT from 'jsonwebtoken';
 import { SIGNKEY } from '../../keys';
 import { ContextProps } from 'src';
-
-interface SignupArgProps {
-  user: {
-    sign: {
-      email: string;
-      password: string;
-    };
-    name: string;
-    bio?: string;
+import { errorTokenMsg } from '../../../utils';
+interface UserSignupProps {
+  sign: {
+    email: string;
+    password: string;
   };
+  name: string;
+  bio?: string;
 }
-interface SignupPayload {
+
+interface UserSignPayload {
   userErrors: {
     message: string;
   }[];
@@ -23,103 +22,64 @@ interface SignupPayload {
 
 export const userSignup = async (
   _: any,
-  { user }: SignupArgProps,
+  { sign, name, bio }: UserSignupProps,
   { prisma }: ContextProps
-): Promise<SignupPayload> => {
-  const { sign, name, bio } = user;
+): Promise<UserSignPayload> => {
   const { email, password } = sign;
-
-  //verify are all fields provided?
-  if (!email || !name || !password) {
-    return {
-      userErrors: [
-        {
-          message: 'Please provide fields email, name and password to Signup'
-        }
-      ],
-      token: null
-    };
+  //validate are all fields filled?
+  if (!email || !password || !name) {
+    return errorTokenMsg('All fields are important to Signup!');
   }
 
-  //validate the email
+  //validate is email has valid format?
   if (!validator.isEmail(email)) {
-    return {
-      userErrors: [
-        {
-          message: 'Invalid Email!'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('Invalid Email!');
   }
 
-  //validate the email
-  if (!validator.isLength(name, { min: 3 })) {
-    return {
-      userErrors: [
-        {
-          message: 'Name must have minimum 3 characters.'
-        }
-      ],
-      token: null
-    };
-  }
-
+  //varify is this email already registered?
   const existingUser = await prisma.user.findUnique({
     where: {
       email
     }
   });
-
   if (existingUser) {
-    return {
-      userErrors: [
-        {
-          message: 'User already exist'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('User already exists!.. Please signin!');
   }
 
-  //validate the password
   if (!validator.isLength(password, { min: 8 })) {
-    return {
-      userErrors: [
-        {
-          message: 'Password must have minimum 8 characters.'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('Password should be minimum 8 characters in length');
   }
 
-  //convert password into a hashed type
-  const hashedPassword = await bcryptjs.hash(password, 10);
+  if (!validator.isLength(name, { min: 3 })) {
+    return errorTokenMsg('Name should be minimum 3 characters in length');
+  }
 
-  //creating user
-  const createdUser = await prisma.user.create({
+  //hash the password
+  const saltRounds = 10;
+  const hashedPassword = await bcryptjs.hash(password, saltRounds);
+
+  //signup the user
+  const user = await prisma.user.create({
     data: {
       email,
-      name,
-      password: hashedPassword
+      password: hashedPassword,
+      name
     }
   });
 
-  //create a token
-  const token = await JWT.sign({ userId: createdUser.id }, SIGNKEY, {
-    expiresIn: 46000
-  });
-
-  //create profile
   if (bio) {
     await prisma.profile.create({
       data: {
-        userId: createdUser.id,
-        bio
+        bio,
+        userId: user.id
       }
     });
   }
+
+  //create token
+  const token = await JWT.sign({ userId: user.id }, SIGNKEY, {
+    expiresIn: 46000
+  });
 
   return {
     userErrors: [],

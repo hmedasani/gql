@@ -1,17 +1,18 @@
 import { Post, Prisma } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
+import JWT from 'jsonwebtoken';
+import { canUserMutateThisPost, errorPostMsg } from '../../../utils';
 import { ContextProps } from 'src';
-import { canUserMutatePost } from '../../../utils';
 
-interface PostUpdateArgProps {
-  postId: number | null;
+interface PostArgProps {
+  postId: string;
   post: {
     title: string;
     content: string;
   };
 }
 
-interface PostUpdatePayload {
+interface PostPayloadProps {
   userErrors: {
     message: string;
   }[];
@@ -20,106 +21,52 @@ interface PostUpdatePayload {
 
 export const postUpdate = async (
   _: any,
-  { postId, post }: PostUpdateArgProps,
-  { userInfo, prisma }: ContextProps
-): Promise<PostUpdatePayload> => {
-  //validate is user loggedin?
-  if (!userInfo) {
-    return {
-      userErrors: [
-        {
-          message: 'Please login!'
-        }
-      ],
-      post: null
-    };
-  }
+  { postId, post }: PostArgProps,
+  { prisma, userInfo }: ContextProps
+): Promise<PostPayloadProps> => {
+  if (!userInfo) return errorPostMsg('Forbidden Credentials');
 
-  //validate is postId provided?
-  if (!postId) {
-    return {
-      userErrors: [
-        {
-          message: 'Choose right post to Update!'
-        }
-      ],
-      post: null
-    };
-  }
-  //validate is title and content provided?
   const { title, content } = post;
-  if (!title && !content) {
-    return {
-      userErrors: [
-        {
-          message: 'You must povide title or content field to Update this Post'
-        }
-      ],
-      post: null
-    };
-  }
+  //choose the post to update
+  if (!postId) return errorPostMsg('Choose the Post to update!');
 
-  //validate is user exist?
-  const loggedInUser = await prisma.user.findUnique({
-    where: {
-      id: Number(userInfo.userId)
-    }
-  });
+  //validate are all fields filled?
+  if (!title && !content)
+    return errorPostMsg(
+      'Title OR content, one must be provided to udpate this Post!'
+    );
 
-  if (!loggedInUser) {
-    return {
-      userErrors: [
-        {
-          message: 'Forbidden credentials!'
-        }
-      ],
-      post: null
-    };
-  }
-
-  //validate is post exist?
-  const findPost = await prisma.post.findUnique({
-    where: {
-      id: Number(postId)
-    }
-  });
-
-  if (!findPost) {
-    return {
-      userErrors: [
-        {
-          message: 'Chosen post is not available!'
-        }
-      ],
-      post: null
-    };
-  }
-
-  const error = await canUserMutatePost({
-    userId: Number(userInfo?.userId),
+  //validate is this user authorised to update this post
+  const error = await canUserMutateThisPost({
     postId: Number(postId),
+    userId: Number(userInfo?.userId),
     prisma
   });
 
   if (error) return error;
 
-  //create new object with title and content
-  let postObj: { title?: string; content?: string } = {
+  //what to update
+  const toBeUpdatedObj: {
+    title?: string;
+    content?: string;
+  } = {
     title,
     content
   };
 
-  if (!title) delete postObj.title;
-  if (!content) delete postObj.content;
+  if (!title) delete toBeUpdatedObj?.title;
+  if (!content) delete toBeUpdatedObj?.content;
 
-  //return
+  // Update the post
+  const updatedPost = await prisma.post.update({
+    where: {
+      id: Number(postId)
+    },
+    data: toBeUpdatedObj
+  });
+
   return {
     userErrors: [],
-    post: prisma.post.update({
-      where: {
-        id: Number(postId)
-      },
-      data: postObj
-    })
+    post: updatedPost
   };
 };

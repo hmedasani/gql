@@ -1,12 +1,12 @@
 import { Post, Prisma } from '@prisma/client';
+import { canUserMutateThisPost, errorPostMsg } from '../../../utils';
 import { ContextProps } from 'src';
-import { canUserMutatePost } from '../../../utils';
 
-interface PostDeleteArgProps {
+interface PostArgProps {
   postId: string;
 }
 
-interface PostDeletePayload {
+interface PostPayloadProps {
   userErrors: {
     message: string;
   }[];
@@ -15,66 +15,32 @@ interface PostDeletePayload {
 
 export const postDelete = async (
   _: any,
-  { postId }: PostDeleteArgProps,
-  { userInfo, prisma }: ContextProps
-): Promise<PostDeletePayload> => {
-  //validate is user loggedin?
-  if (!userInfo) {
-    return {
-      userErrors: [
-        {
-          message: 'Please login!'
-        }
-      ],
-      post: null
-    };
-  }
+  { postId }: PostArgProps,
+  { prisma, userInfo }: ContextProps
+): Promise<PostPayloadProps> => {
+  if (!userInfo) return errorPostMsg('Forbidden Credentials');
 
-  //validate is postId provided?
-  if (!postId) {
-    return {
-      userErrors: [
-        {
-          message: 'Choose right post to Delete!'
-        }
-      ],
-      post: null
-    };
-  }
+  //choose the post to Delete
+  if (!postId) return errorPostMsg('Choose the Post to Delete!');
 
-  //validate is this post available?
-  const findPost = await prisma.post.findUnique({
-    where: {
-      id: Number(postId)
-    }
-  });
-
-  if (!findPost) {
-    return {
-      userErrors: [
-        {
-          message: 'Choose right post to Delete!'
-        }
-      ],
-      post: null
-    };
-  }
-
-  const error = await canUserMutatePost({
-    userId: Number(userInfo?.userId),
+  //validate is this user authorised to Delete this post
+  const error = await canUserMutateThisPost({
     postId: Number(postId),
+    userId: Number(userInfo?.userId),
     prisma
   });
 
   if (error) return error;
 
-  //return
+  // Delete the post
+  const deletedPost = await prisma.post.delete({
+    where: {
+      id: Number(postId)
+    }
+  });
+
   return {
     userErrors: [],
-    post: prisma.post.delete({
-      where: {
-        id: Number(postId)
-      }
-    })
+    post: deletedPost
   };
 };

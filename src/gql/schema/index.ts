@@ -6,13 +6,15 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    userSignup(user: UserInput!): UserPayloadSign!
-    userSignin(user: UserInputSignin!): UserPayloadSign!
-    postCreate(post: PostInput!): PostPayload!
-    postUpdate(postId: ID!, post: PostInput!): PostPayload!
-    postDelete(postId: ID!): PostPayload!
-    postPublish(postId: ID!): PostPayload!
-    postUnPublish(postId: ID!): PostPayload!
+    userSignup(
+      sign: InputUserSignin!
+      name: String!
+      bio: String!
+    ): UserPayload!
+    userSignin(sign: InputUserSignin!): UserPayload!
+    postCreate(post: InputPost!): PostPayload!
+    postUpdate(postId: String!, post: InputPost!): PostPayload!
+    postDelete(postId: String!): PostPayload!
   }
 
   type Post {
@@ -20,7 +22,7 @@ export const typeDefs = gql`
     title: String!
     content: String!
     published: Boolean!
-    createdAt: String!
+    createdBy: String!
     author: User!
   }
 
@@ -28,7 +30,8 @@ export const typeDefs = gql`
     id: ID!
     email: String!
     name: String!
-    createdAt: String!
+    password: String!
+    createdBy: String!
     posts: [Post!]!
     profile: Profile
   }
@@ -36,17 +39,11 @@ export const typeDefs = gql`
   type Profile {
     id: ID!
     bio: String!
-    createdAt: String!
+    createdBy: String!
     user: User!
   }
 
-  input UserInput {
-    sign: UserInputSignin!
-    name: String!
-    bio: String
-  }
-
-  input UserInputSignin {
+  input InputUserSignin {
     email: String!
     password: String!
   }
@@ -55,12 +52,12 @@ export const typeDefs = gql`
     message: String!
   }
 
-  type UserPayloadSign {
+  type UserPayload {
     userErrors: [UserError!]!
     token: String
   }
 
-  input PostInput {
+  input InputPost {
     title: String
     content: String
   }

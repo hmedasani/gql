@@ -1,16 +1,16 @@
 import validator from 'validator';
 import JWT from 'jsonwebtoken';
-import bcryptjs from 'bcryptjs';
 import { SIGNKEY } from '../../keys';
 import { ContextProps } from 'src';
-
-interface SigninArgProps {
-  user: {
+import { errorTokenMsg, verifyPassword } from '../../../utils';
+interface UserSigninProps {
+  sign: {
     email: string;
     password: string;
   };
 }
-interface SigninPayload {
+
+interface UserSignPayload {
   userErrors: {
     message: string;
   }[];
@@ -19,71 +19,40 @@ interface SigninPayload {
 
 export const userSignin = async (
   _: any,
-  { user }: SigninArgProps,
+  { sign }: UserSigninProps,
   { prisma }: ContextProps
-): Promise<SigninPayload> => {
-  const { email, password } = user;
-
-  //verify are all fields provided?
+): Promise<UserSignPayload> => {
+  const { email, password } = sign;
+  //validate are all fields filled?
   if (!email || !password) {
-    return {
-      userErrors: [
-        {
-          message: 'Please provide fields email, password to Signin'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('All fields are important to Signin!');
   }
 
-  //validate the email
+  //validate is email has valid format?
   if (!validator.isEmail(email)) {
-    return {
-      userErrors: [
-        {
-          message: 'Invalid Email!'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('Invalid Credentials!');
   }
 
+  //varify is this email already registered?
   const existingUser = await prisma.user.findUnique({
     where: {
       email
     }
   });
-
   if (!existingUser) {
-    return {
-      userErrors: [
-        {
-          message: 'Invalid Credentials!'
-        }
-      ],
-      token: null
-    };
+    return errorTokenMsg('User does not exists.  Please Signup!');
   }
 
-  //validate Password
-  const isPasswordMatched = await bcryptjs.compare(
+  //verify password
+  const error = await verifyPassword({
+    userId: Number(existingUser.id),
     password,
-    existingUser.password
-  );
+    prisma
+  });
 
-  //validate the email
-  if (!isPasswordMatched) {
-    return {
-      userErrors: [
-        {
-          message: 'Invalid Credentials!'
-        }
-      ],
-      token: null
-    };
-  }
+  if (error) return error;
 
-  //create a token
+  //create token
   const token = await JWT.sign({ userId: existingUser.id }, SIGNKEY, {
     expiresIn: 46000
   });

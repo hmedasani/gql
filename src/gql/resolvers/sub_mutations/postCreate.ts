@@ -1,14 +1,15 @@
 import { Post, Prisma } from '@prisma/client';
+import { errorPostMsg } from '../../../utils';
 import { ContextProps } from 'src';
 
-interface PostCreateArgProps {
+interface PostArgProps {
   post: {
     title: string;
     content: string;
   };
 }
 
-interface PostCreatePayload {
+interface PostPayloadProps {
   userErrors: {
     message: string;
   }[];
@@ -17,32 +18,17 @@ interface PostCreatePayload {
 
 export const postCreate = async (
   _: any,
-  { post }: PostCreateArgProps,
-  { userInfo, prisma }: ContextProps
-): Promise<PostCreatePayload> => {
-  if (!userInfo) {
-    return {
-      userErrors: [
-        {
-          message: 'Please login to create this Post'
-        }
-      ],
-      post: null
-    };
-  }
+  { post }: PostArgProps,
+  { prisma, userInfo }: ContextProps
+): Promise<PostPayloadProps> => {
+  if (!userInfo) return errorPostMsg('Please Login to create the Post!');
 
   const { title, content } = post;
-  if (!title || !content) {
-    return {
-      userErrors: [
-        {
-          message: 'You must povide all fields to create a Post'
-        }
-      ],
-      post: null
-    };
-  }
+  //validate are all fields filled?
+  if (!title || !content)
+    return errorPostMsg('All fields are important to Create a Post!');
 
+  //create the post
   const createdPost = await prisma.post.create({
     data: {
       title,
