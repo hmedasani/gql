@@ -4,7 +4,7 @@ import { Mutation, Query, Profile, Post, User } from './gql/resolvers';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { getUserFromStr } from './utils';
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 export interface ContextProps {
   prisma: PrismaClient<
     Prisma.PrismaClientOptions,
